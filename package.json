@@ -1,6 +1,6 @@
 {
-  "name": "palletemanager",
-  "productName": "palletemanager",
+  "name": "pallet-organizer",
+  "productName": "pallet-organizer",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": "src/index.js",
@@ -24,7 +24,7 @@
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "palletemanager"
+            "name": "pallet-organizer"
           }
         },
         {
