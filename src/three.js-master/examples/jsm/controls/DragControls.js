@@ -53,6 +53,8 @@ var DragControls = function ( _objects, _camera, _domElement ) {
 		_domElement.removeEventListener( 'touchstart', onDocumentTouchStart, false );
 		_domElement.removeEventListener( 'touchend', onDocumentTouchEnd, false );
 
+		_domElement.style.cursor = '';
+
 	}
 
 	function dispose() {
@@ -128,35 +130,41 @@ var DragControls = function ( _objects, _camera, _domElement ) {
 	}
 
 	function onDocumentMouseDown( event ) {
+		
 		if( event.button == 0 ) {
+
 			event.preventDefault();
 
 			_intersections.length = 0;
-	
+
 			_raycaster.setFromCamera( _mouse, _camera );
 			_raycaster.intersectObjects( _objects, true, _intersections );
-	
+
 			if ( _intersections.length > 0 ) {
-	
+
 				_selected = ( scope.transformGroup === true ) ? _objects[ 0 ] : _intersections[ 0 ].object;
-	
+
 				if ( _raycaster.ray.intersectPlane( _plane, _intersection ) ) {
-	
+
 					_inverseMatrix.getInverse( _selected.parent.matrixWorld );
 					_offset.copy( _intersection ).sub( _worldPosition.setFromMatrixPosition( _selected.matrixWorld ) );
-	
+
 				}
-	
+
 				_domElement.style.cursor = 'move';
-	
+
 				scope.dispatchEvent( { type: 'dragstart', object: _selected } );
-	
+
 			}
+
 		}
+
 	}
 
 	function onDocumentMouseCancel( event ) {
+		
 		if( event.button == 0 ) {
+
 			event.preventDefault();
 
 			if ( _selected ) {
@@ -168,6 +176,7 @@ var DragControls = function ( _objects, _camera, _domElement ) {
 			}
 
 			_domElement.style.cursor = _hovered ? 'pointer' : 'auto';
+		
 		}
 
 	}
@@ -258,7 +267,7 @@ var DragControls = function ( _objects, _camera, _domElement ) {
 	// API
 
 	this.enabled = true;
-	this.transformGroup = false;
+	this.transformGroup = true;
 
 	this.activate = activate;
 	this.deactivate = deactivate;

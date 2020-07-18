@@ -41,57 +41,56 @@ var palletFrame = new THREE.LineSegments(
 pallet.add( palletFrame );
 
 
-// USED FOR CHECKING WHETHER A PACKAGE IS PLACED WITHIN THE PALLET'S BOUNDARIES
+// USED FOR CHECKING WHETHER A PACK IS PLACED WITHIN THE PALLET'S BOUNDARIES
 
-function isPackageWithinPallet( packPos, packGeoParam ) {
+function isPackWithinPallet( packPos, packGeoParam ) {
 
     let palletGeoParam = pallet.geometry.parameters;
 
-    if(
+    return (
         packPos.x - packGeoParam.width / 2 >= centralPoint.x - palletGeoParam.width / 2   && 
         packPos.x + packGeoParam.width / 2 <= centralPoint.x + palletGeoParam.width / 2   &&
         packPos.z - packGeoParam.height / 2 >= centralPoint.z - palletGeoParam.height / 2 && 
         packPos.z + packGeoParam.height / 2 <= centralPoint.z + palletGeoParam.height / 2
-    ) {
+    );
 
-        return true;
-        
-    }
-    else {
-
-        return false;
-
-    }
 }
 
 
 // PACKAGES
 
-var draggableObjects = [];
+var packs = []
 
-class Package extends THREE.Mesh {
+class Pack extends THREE.Mesh {
 
     constructor( obj ) {
 
+        var packGeo = new THREE.BoxGeometry( obj.width, obj.height, obj.depth )
         super(
-            new THREE.BoxGeometry( obj.width, obj.height, obj.depth ),
-            new THREE.MeshPhongMaterial( { color: obj.color } )
+            packGeo,
+            new THREE.MeshLambertMaterial( { color: obj.color } )
         );
+
+        var edgeGeo = new THREE.EdgesGeometry( packGeo );
+        let edgeMat = new THREE.LineBasicMaterial({
+
+          color: 0x000000
+
+        });
+        let edgeMesh = new THREE.LineSegments( edgeGeo, edgeMat );
+        this.add( edgeMesh );
         
         this.originalPos = new THREE.Vector3( obj.posX, obj.posY, obj.posZ );
         this.lastPos = this.originalPos;
 
-        // doesn't do anything for now
-        this.weight = obj.weight;
-
         this.position.set( obj.posX, obj.posY, obj. posZ );
         this.rotation.x = 90 * Math.PI / 180;
 
-        // was the package's last, static position on the sidebar?
+        // was the pack's last, static position on the sidebar?
         this.wasOnTheSidebar = false;
 
         palletGroup.add( this );
-        draggableObjects.push( this );
+        packs.push( this );
 
     }
 
@@ -114,7 +113,9 @@ class Package extends THREE.Mesh {
     }
 }
 
-var package1 = new Package( {
+// TEMPORARY
+
+var pack1 = new Pack( {
 
     posX:   0,
     posY:   2,
@@ -122,12 +123,11 @@ var package1 = new Package( {
     width:  4,
     height: 4,
     depth:  4,
-    color:  0xFF0000,
-    weight: 0
+    color:  0xFF0000
 
 } );
 
-var package2 = new Package( {
+var pack2 = new Pack( {
 
     posX:   4,
     posY:   1.5,
@@ -135,8 +135,7 @@ var package2 = new Package( {
     width:  6,
     height: 4,
     depth:  3,
-    color:  0x0000FF,
-    weight: 0
+    color:  0x0000FF
 
 } );
 
@@ -180,7 +179,7 @@ var rmbDown = false,
 
 window.addEventListener( 'mousemove', function ( e ) {
 
-    if ( !rmbDown ) {
+    if ( ! rmbDown ) {
 
         return;
 
@@ -222,6 +221,7 @@ window.addEventListener( 'mousedown', function ( e ) {
         mouseY = e.clientY;
 
     }
+
 }, false );
 
 
@@ -247,7 +247,6 @@ sidebarPoints.push( new THREE.Vector3( sidebarX, 100, 0 ) );
 sidebarPoints.push( new THREE.Vector3( sidebarX, -100, 0 ) );
 
 var sidebar = new THREE.Line(
-
     new THREE.BufferGeometry().setFromPoints( sidebarPoints ), 
     new THREE.LineDashedMaterial( {
 
@@ -258,7 +257,6 @@ var sidebar = new THREE.Line(
         gapSize: 2
 
     } )
-
 );
 sidebar.computeLineDistances();
 sceneUI.add( sidebar );
@@ -267,36 +265,72 @@ sceneUI.add( sidebar );
 // CURRENT MOUSE POSITION
 
 var mouse = new THREE.Vector2();
+window.addEventListener( 'mousemove', onMouseMove );
 
 function onMouseMove( event ) {
 
 	mouse.x = (event.clientX / window.innerWidth ) * 2 - 1;
     mouse.y = - (event.clientY / window.innerHeight ) * 2 + 1;
+
 }
-window.addEventListener( 'mousemove', onMouseMove );
 
 
-//DRAG CONTROLS
+// RAYCASTING FROM MOUSE CURSOR, CURRENTLY USED FOR DRAGGING
+
+var raycaster = new THREE.Raycaster();
+var lastPackMousedOn;
+window.addEventListener( 'mousemove', raycast );
+
+function raycast() {
+
+    raycaster.setFromCamera( mouse, cameraPerp );
+    var intersects = raycaster.intersectObjects( packs );
+
+    if( ! currentlyDragging ) {
+
+        if( intersects.length > 0 ) {
+    
+            draggableObjects.length = 0;
+    
+            if( lastPackMousedOn ) {
+    
+                lastPackMousedOn.material.emissive.set( 0x000000 );
+                
+            }
+    
+            lastPackMousedOn = intersects[0].object;
+            draggableObjects.push( lastPackMousedOn );
+    
+            lastPackMousedOn.material.emissive.set( 0x222222 );
+    
+        } else if( lastPackMousedOn ) {
+    
+            lastPackMousedOn.material.emissive.set( 0x000000 );
+    
+        }
+
+    }
+
+}
+
+
+// DRAG CONTROLS
+
+var draggableObjects = [];
+
+var currentlyDragging = false;
 
 var dragControls = new DragControls( draggableObjects, cameraPerp, renderer.domElement );
 
-dragControls.addEventListener( 'hoveron', function( event ) {
+dragControls.addEventListener( 'dragstart', function( event ) {
 
-    let pack = event.object;
-
-    pack.material.emissive.set( 0x222222 );
-
-} );
-
-dragControls.addEventListener( 'hoveroff', function( event ) {
-
-    let pack = event.object;
-
-    pack.material.emissive.set( 0x000000 );
+    currentlyDragging = true;
 
 } );
 
 dragControls.addEventListener( 'dragend', function ( event ) {
+
+    currentlyDragging = false;
     
     let pack = event.object;
 
@@ -313,7 +347,7 @@ dragControls.addEventListener( 'dragend', function ( event ) {
 
             // removing the pack from the pallet by adding it to the scene, so that it doesn't
             // start rotating around the pallet's center
-            scene.add(pack);
+            scene.add( pack );
 
             let palletGroupRotation = new THREE.Euler();
             palletGroupRotation.copy( palletGroup.rotation );
@@ -362,7 +396,7 @@ dragControls.addEventListener( 'dragend', function ( event ) {
             let packLocalPosition = pack.position;
             palletGroup.worldToLocal( packLocalPosition );
 
-            if( isPackageWithinPallet( packLocalPosition, pack.geometry.parameters ) ) {
+            if( isPackWithinPallet( packLocalPosition, pack.geometry.parameters ) ) {
 
                 pack.updateLastPos();
 
@@ -385,7 +419,7 @@ dragControls.addEventListener( 'dragend', function ( event ) {
         }
         else {
 
-            if( isPackageWithinPallet( pack.position, pack.geometry.parameters ) ) {
+            if( isPackWithinPallet( pack.position, pack.geometry.parameters ) ) {
 
                 pack.updateLastPos();
 
