@@ -1,12 +1,12 @@
 import { DragControls } from './three.js-master/examples/jsm/controls/DragControls.js';
 
 
-var renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+let renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.autoClear = false;
 document.getElementById( 'MainThreeJS' ).appendChild( renderer.domElement );
 
-var scene = new THREE.Scene();
+let scene = new THREE.Scene();
 
 const centralPoint = new THREE.Vector3( 0, 0, 0 );
 
@@ -18,23 +18,23 @@ scene.add( new THREE.AmbientLight( 0xD9D9D9 ) );
 
 // PALLET
 
-var palletGroup = new THREE.Group();
+let palletGroup = new THREE.Group();
 
-const palletWidth = 20;
-const palletHeight = 40;
-const palletDepth = 1;
-var pallet = new THREE.Mesh(
+const palletWidth = 100;
+const palletHeight = 120;
+const palletDepth = 2.5;
+let pallet = new THREE.Mesh(
     new THREE.BoxGeometry( palletWidth, palletHeight, palletDepth ), 
     new THREE.MeshBasicMaterial( { color: 0x888888 } )
 );
 
 // y = - palletDepth / 2, so that its upper surface is equal to y = 0
-pallet.position.set( 0, - palletDepth / 2, 0 );
+pallet.position.set( 0, - palletDepth / 2 - 0.1, 0 );
 pallet.rotation.x = 90 * Math.PI / 180;
 palletGroup.add(pallet);
 scene.add( palletGroup );
 
-var palletFrame = new THREE.LineSegments(
+let palletFrame = new THREE.LineSegments(
     new THREE.EdgesGeometry( pallet.geometry ), 
     new THREE.LineBasicMaterial( { color: 0x303030, linewidth: 1 } )
 );
@@ -57,26 +57,54 @@ function isPackWithinPallet( packPos, packGeoParam ) {
 }
 
 
+// GRID
+
+let gridGeo = new THREE.Geometry();
+
+for(let i = 1; - palletHeight / 2 + i * 2.5 < palletHeight / 2; i++) {
+
+    gridGeo.vertices.push( new THREE.Vector3( - palletWidth / 2, 0, - palletHeight / 2 + i * 2.5 ) );
+    gridGeo.vertices.push( new THREE.Vector3( palletWidth / 2, 0, - palletHeight / 2 + i * 2.5 ) );
+
+}
+
+for(let i = 1; - palletWidth / 2 + i * 2.5 < palletWidth / 2; i++) {
+
+    gridGeo.vertices.push( new THREE.Vector3( - palletWidth / 2 + i * 2.5, 0.1, - palletHeight / 2 ) );
+    gridGeo.vertices.push( new THREE.Vector3( - palletWidth / 2 + i * 2.5, 0.1, palletHeight / 2 ) );
+
+}
+
+let gridMat = new THREE.LineBasicMaterial( {
+
+    color: 0x000000
+
+} );
+
+let grid = new THREE.LineSegments( gridGeo, gridMat );
+palletGroup.add(grid);
+
+
 // PACKAGES
 
-var packs = []
+let packs = []
 
 class Pack extends THREE.Mesh {
 
     constructor( obj ) {
 
-        var packGeo = new THREE.BoxGeometry( obj.width, obj.height, obj.depth )
+        let packGeo = new THREE.BoxGeometry( obj.width, obj.height, obj.depth )
         super(
             packGeo,
             new THREE.MeshLambertMaterial( { color: obj.color } )
         );
 
-        var edgeGeo = new THREE.EdgesGeometry( packGeo );
-        let edgeMat = new THREE.LineBasicMaterial({
+        let edgeGeo = new THREE.EdgesGeometry( packGeo );
+        let edgeMat = new THREE.LineBasicMaterial( {
 
           color: 0x000000
 
-        });
+        } );
         let edgeMesh = new THREE.LineSegments( edgeGeo, edgeMat );
         this.add( edgeMesh );
         
@@ -86,7 +114,15 @@ class Pack extends THREE.Mesh {
         this.position.set( obj.posX, obj.posY, obj. posZ );
         this.rotation.x = 90 * Math.PI / 180;
 
-        // was the pack's last, static position on the sidebar?
+        this.core = new THREE.Object3D( {
+
+            visible: false
+            
+        } );
+        this.core.position.copy(this.position);
+        this.add(this.core);
+
+        // was the pack's last, "static" position on the sidebar?
         this.wasOnTheSidebar = false;
 
         palletGroup.add( this );
@@ -115,43 +151,43 @@ class Pack extends THREE.Mesh {
 
 // TEMPORARY
 
-var pack1 = new Pack( {
+let pack1 = new Pack( {
 
     posX:   0,
-    posY:   2,
+    posY:   10,
     posZ:   0,
-    width:  4,
-    height: 4,
-    depth:  4,
+    width:  20,
+    height: 20,
+    depth:  20,
     color:  0xFF0000
 
 } );
 
-var pack2 = new Pack( {
+let pack2 = new Pack( {
 
     posX:   4,
-    posY:   1.5,
+    posY:   7.5,
     posZ:   15,
-    width:  6,
-    height: 4,
-    depth:  3,
+    width:  30,
+    height: 20,
+    depth:  15,
     color:  0x0000FF
 
 } );
 
 
-// PERSPECTIVE CAMERA
+// PERSPECTIVE (MAIN) CAMERA
 
-var cameraPerp = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 2000 );
+let cameraPerp = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 2000 );
 scene.add( cameraPerp );
 
-cameraPerp.position.set( 0, 40, 80 );
+cameraPerp.position.set( 0, 120, 240 );
 cameraPerp.lookAt( pallet.position );
 
 
 // PALLETGROUP ROTATION CONTROLS
 
-var lmbDown = false;
+let lmbDown = false;
 
 window.addEventListener( 'mousedown', function ( e ) {
 
@@ -173,7 +209,7 @@ window.addEventListener( 'mouseup', function ( e ) {
 
 }, false );
 
-var rmbDown = false,
+let rmbDown = false,
     mouseX = 0,
     mouseY = 0;
 
@@ -187,7 +223,7 @@ window.addEventListener( 'mousemove', function ( e ) {
 
     e.preventDefault();
 
-    var deltaX = e.clientX - mouseX,
+    let deltaX = e.clientX - mouseX,
         deltaY = e.clientY - mouseY;
     mouseX = e.clientX;
     mouseY = e.clientY;
@@ -236,17 +272,17 @@ function rotateScene( deltaX, deltaY ) {
 
 // SIDEBAR
 
-var sceneUI = new THREE.Scene();
+let sceneUI = new THREE.Scene();
 
-var cameraOrth = new THREE.OrthographicCamera( -100, 100, 100, -100, -1, 0 );
+let cameraOrth = new THREE.OrthographicCamera( -100, 100, 100, -100, -1, 0 );
 cameraOrth.position.set( 0, 0, 0 );
 
-var sidebarPoints = [];
+let sidebarPoints = [];
 const sidebarX = 65;
 sidebarPoints.push( new THREE.Vector3( sidebarX, 100, 0 ) );
 sidebarPoints.push( new THREE.Vector3( sidebarX, -100, 0 ) );
 
-var sidebar = new THREE.Line(
+let sidebar = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints( sidebarPoints ), 
     new THREE.LineDashedMaterial( {
 
@@ -264,7 +300,7 @@ sceneUI.add( sidebar );
 
 // CURRENT MOUSE POSITION
 
-var mouse = new THREE.Vector2();
+let mouse = new THREE.Vector2();
 window.addEventListener( 'mousemove', onMouseMove );
 
 function onMouseMove( event ) {
@@ -277,20 +313,20 @@ function onMouseMove( event ) {
 
 // RAYCASTING FROM MOUSE CURSOR, CURRENTLY USED FOR DRAGGING
 
-var raycaster = new THREE.Raycaster();
-var lastPackMousedOn;
+let raycaster = new THREE.Raycaster();
+let lastPackMousedOn;
 window.addEventListener( 'mousemove', raycast );
 
 function raycast() {
 
     raycaster.setFromCamera( mouse, cameraPerp );
-    var intersects = raycaster.intersectObjects( packs );
+    let intersects = raycaster.intersectObjects( packs );
 
     if( ! currentlyDragging ) {
 
+        draggableObjects.length = 0;
+
         if( intersects.length > 0 ) {
-    
-            draggableObjects.length = 0;
     
             if( lastPackMousedOn ) {
     
@@ -301,7 +337,7 @@ function raycast() {
             lastPackMousedOn = intersects[0].object;
             draggableObjects.push( lastPackMousedOn );
     
-            lastPackMousedOn.material.emissive.set( 0x222222 );
+            lastPackMousedOn.material.emissive.set( 0x252525 );
     
         } else if( lastPackMousedOn ) {
     
@@ -316,15 +352,33 @@ function raycast() {
 
 // DRAG CONTROLS
 
-var draggableObjects = [];
+let draggableObjects = [];
 
-var currentlyDragging = false;
+let currentlyDragging = false;
 
-var dragControls = new DragControls( draggableObjects, cameraPerp, renderer.domElement );
+let dragControls = new DragControls( draggableObjects, cameraPerp, renderer.domElement );
 
 dragControls.addEventListener( 'dragstart', function( event ) {
 
     currentlyDragging = true;
+
+} );
+
+dragControls.addEventListener( 'drag', function( event ) {
+
+    let pack = event.object;
+
+    if( isPackWithinPallet( pack.position, pack.geometry.parameters ) ) {
+        
+        if( pack.position.y - pack.geometry.parameters.depth / 2 < 0 ) {
+
+            pack.position.y = 0 + pack.geometry.parameters.depth / 2;
+
+        }
+
+    }
+
+    console.log(pack.core.position);
 
 } );
 
@@ -342,7 +396,7 @@ dragControls.addEventListener( 'dragend', function ( event ) {
             let worldPosition = pack.position;
             palletGroup.localToWorld( worldPosition );
 
-            // to prevent it from flickering momentarily when adding to scene
+            // to prevent it from flickering momentarily when adding to the scene
             pack.matrixAutoUpdate = false;
 
             // removing the pack from the pallet by adding it to the scene, so that it doesn't
