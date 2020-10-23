@@ -1,0 +1,46 @@
+{
+    "pallet": {
+        "width": 100,
+        "height": 120,
+        "depth": 2.5
+    },
+    "packs": [
+        {
+            "name": "Woda",
+            "dimensions": {
+                "width": 20,
+                "height": 20,
+                "depth": 20
+            },
+            "weight": 20,
+            "positions": [
+                {
+                    "x": 6,
+                    "y": 0,
+                    "z": 5
+                },
+                {
+                    "x": -23,
+                    "y": 0,
+                    "z": 26
+                }
+            ]
+        },
+        {
+            "name": "Kwiatki",
+            "dimensions": {
+                "width": 30,
+                "height": 20,
+                "depth": 15
+            },
+            "weight": 2,
+            "positions": [
+                {
+                    "x": 13,
+                    "y": -8.881784197001252e-16,
+                    "z": -26
+                }
+            ]
+        }
+    ]
+}
