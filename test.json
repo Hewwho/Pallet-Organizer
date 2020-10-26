@@ -1,8 +1,8 @@
 {
     "pallet": {
-        "width": 100,
+        "width": 80,
         "height": 120,
-        "depth": 2.5
+        "depth": 14.4
     },
     "packs": [
         {

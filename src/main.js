@@ -1,4 +1,6 @@
 import { DragControls } from './three.js-master/examples/jsm/controls/DragControls.js';
+import { OBJLoader } from './three.js-master/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
 
 
 const _ = require('lodash');
@@ -40,26 +42,39 @@ function createPallet(width, height, depth) {
     palletHeight = height;
     palletDepth = depth;
     
-    pallet = new THREE.Mesh(
-        new THREE.BoxGeometry(palletWidth, palletHeight, palletDepth), 
-        new THREE.MeshBasicMaterial({
-            color: 0x888888
-        })
-    );
-    
-    // y = - palletHeight / 2, so that its upper surface is equal to y = 0
+    pallet = new THREE.Group()
+
+    pallet.parameters = { width: palletWidth, height: palletHeight, depth: palletDepth}
     pallet.position.set(0, - palletDepth / 2 - 0.1, 0);
     pallet.rotation.x = 90 * Math.PI / 180;
     palletGroup.add(pallet);
     
-    let palletFrame = new THREE.LineSegments(
-        new THREE.EdgesGeometry(pallet.geometry), 
-        new THREE.LineBasicMaterial({
-            color:     0x303030,
-            linewidth: 1
-        })
-    );
-    pallet.add(palletFrame);
+    let palletObject = new THREE.Group();
+    pallet.add(palletObject)
+
+    var loader = new OBJLoader();
+    var mtlLoader = new MTLLoader();
+    mtlLoader.load('./pallet/pallet_1200x800.mtl', materials => {
+        materials.preload();
+        loader.setMaterials(materials);
+        loader.load('./pallet/pallet_1200x800.obj', function (obj) {
+
+            var frame = new THREE.LineSegments(
+                new THREE.EdgesGeometry(obj.children[0].geometry),
+                new THREE.LineBasicMaterial({ color: 0x303030, linewidth: 1 }));
+            palletObject.scale.set(0.1 * palletWidth/80, 0.1 * palletDepth/14.4, 0.1 * palletHeight/120)
+            palletObject.rotation.x = - 90 * Math.PI / 180;
+            palletObject.position.set(0, 0, 14.4/2);
+
+            palletObject.add(obj);
+            palletObject.add(frame);
+
+        }, undefined, function (error) {
+            console.error(error);
+        });
+
+    })
+
     
 
     // GRID
@@ -94,14 +109,14 @@ function createPallet(width, height, depth) {
         
 // TEMPORARY
 
-createPallet(100, 120, 2.5);
+createPallet(80, 120, 14.4);
         
         
 // USED FOR CHECKING WHETHER A PACK IS PLACED WITHIN THE PALLET'S BOUNDARIES
 
 function isPackWithinPallet(packPos, packGeoParam) {
     
-    let palletGeoParam = pallet.geometry.parameters;
+    let palletGeoParam = pallet.parameters;
     
     return (
         packPos.x - packGeoParam.width / 2 >= centralPoint.x - palletGeoParam.width / 2   && 
@@ -231,6 +246,8 @@ let pack3 = new Pack({
     color:  0x0000FF
 });
 
+updateTable()
+
 
 // PERSPECTIVE (MAIN) CAMERA
 
@@ -348,9 +365,9 @@ window.addEventListener('keydown', function (e) {
         if(! isAnyPackOnSidebar) {
 
             let palletToJSON = {
-                width:  pallet.geometry.parameters.width,
-                height: pallet.geometry.parameters.height,
-                depth:  pallet.geometry.parameters.depth
+                width:  pallet.parameters.width,
+                height: pallet.parameters.height,
+                depth:  pallet.parameters.depth
             };
     
             let packsGrouped = _.
@@ -398,6 +415,10 @@ window.addEventListener('keydown', function (e) {
                 filters: [{
                     name:       'JSON file',
                     extensions: ['json']
+                },
+                {
+                    name:       'CSV file',
+                    extensions: ['csv']
                 }]
             });
     
@@ -429,8 +450,16 @@ window.addEventListener('keydown', function (e) {
         let loadPath = dialog.showOpenDialogSync({
             title:      'Open a pallet configuration',
             filters:    [{
+                name:       'All files',
+                extensions: ['*']
+            },
+            {
                 name:       'JSON file',
                 extensions: ['json']
+            },
+            {
+                name:       'CSV file',
+                extensions: ['csv']
             }],
             properties: [
                 'openFile'
@@ -438,10 +467,6 @@ window.addEventListener('keydown', function (e) {
         });
 
         if(loadPath) {
-    
-            let JSONed = fs.readFileSync(loadPath[0], 'utf8');
-            let fromJSON = JSON.parse(JSONed);
-
 
             // removing currently loaded pallet and packs
             palletGroup.remove(pallet);
@@ -449,34 +474,75 @@ window.addEventListener('keydown', function (e) {
                 palletGroup.remove(pack);
             }
             packs = []
+            let colors = [0xEF4538, 0x913E98, 0x4153A3, 0x33A4DC, 0x139586, 0x8BC44A, 0xF9ED37, 0xF7981D, 
+                0x7A5648, 0xE81B64, 0x5C3A97, 0x2780C3, 0x17B9CF, 0x48B04F, 0xCDDD36, 0xFDC110, 0xF1582D]
 
-            createPallet(fromJSON.pallet.width, fromJSON.pallet.height, fromJSON.pallet.depth);
+            if (loadPath[0].substr(loadPath.length - 5, 4) == "json"){
+    
+                let JSONed = fs.readFileSync(loadPath[0], 'utf8');
+                let fromJSON = JSON.parse(JSONed);
 
-            for(const packType of fromJSON.packs) {
+                createPallet(fromJSON.pallet.width, fromJSON.pallet.height, fromJSON.pallet.depth);
 
-                // TEMPORARY - colours shouldn't be similar to each other. maybe save them in the json? probably not a good idea
-                let colour = Math.random() * 0xFFFFFF;
-                
-                for(const packPosition of packType.positions) {
+                for(const packType of fromJSON.packs) {
 
-                    let pack = new Pack({
-                        name:   packType.name,
-                        posX:   packPosition.x,
-                        posY:   packPosition.y,
-                        posZ:   packPosition.z,
-                        weight: packType.weight,
-                        width:  packType.dimensions.width,
-                        height: packType.dimensions.height,
-                        depth:  packType.dimensions.depth,
-                        color:  colour
-                    });
+                    // TEMPORARY - colours shouldn't be similar to each other. maybe save them in the json? probably not a good idea
+                    let colour = Math.random() * 0xFFFFFF;
+                    
+                    for(const packPosition of packType.positions) {
+
+                        let pack = new Pack({
+                            name:   packType.name,
+                            posX:   packPosition.x,
+                            posY:   packPosition.y,
+                            posZ:   packPosition.z,
+                            weight: packType.weight,
+                            width:  packType.dimensions.width,
+                            height: packType.dimensions.height,
+                            depth:  packType.dimensions.depth,
+                            color:  colour
+                        });
+
+                    }
 
                 }
 
+            } else if (loadPath[0].substr(loadPath.length - 4, 3) == "csv"){
+                
+                let fileContent = fs.readFileSync(loadPath[0], 'utf8');
+                console.log(fileContent)
+                var allLines = fileContent.split(/\r\n|\n/);
+                console.log(allLines)
+                var delimiter = allLines[0].indexOf(',') > -1 ? ',' : ';';
+
+                // type;name;id;layer;pos_x;pos_y;pos_z;width;height;depth;weight;max_loading
+                for (var i = 0; i < allLines.length; i++) {
+                    let data = allLines[i].split(delimiter);
+                    if (data[0] == 'pallet') {
+                        console.log("csvpallet")
+                        createPallet(data[7], data[8], data[9]);
+                        
+                    } else if(data[0] == 'pack'){
+                        console.log("csvpack")
+                        let pack = new Pack({
+                            name:   data[1],
+                            // productId: data[2],
+                            // layerId: Number(data[3]),
+                            posX: Number(data[4]),
+                            posY: Number(data[5]),
+                            posZ: Number(data[6]),
+                            width: Number(data[7]),
+                            height: Number(data[8]),
+                            depth: Number(data[9]),
+                            weight: Number(data[10]),
+                            color:  colors[i%colors.length]
+                        });
+
+                    }
+                }
+
             }
-
         }
-
     }
 
 }, false);
@@ -678,6 +744,8 @@ dragControls.addEventListener('dragend', function (event) {
 
                 pack.snapToGrid();
 
+                updateTable();
+
             } else {
 
                 pack.backToLastPos();
@@ -693,6 +761,8 @@ dragControls.addEventListener('dragend', function (event) {
 
                 pack.snapToGrid();
 
+                updateTable();
+
             } else {
 
                 pack.backToLastPos();
@@ -702,6 +772,37 @@ dragControls.addEventListener('dragend', function (event) {
         }
     }
 
+});
+
+
+// DATA TABLE
+
+function updateTable(){
+    document.getElementById("table").innerHTML = ''
+    var table = document.createElement('table');
+    table.style.width = "200px"
+
+    var firstRow = document.createElement('tr');
+    firstRow.innerHTML = "<th>Name</th><th>Position X</th><th>Position Y</th><th>Position Z</th>"+
+    "<th>Width</th><th>Height</th><th>Depth</th>";
+    table.appendChild(firstRow);
+
+    for (let i=0; i<packs.length; i++){
+        var row = document.createElement('tr');
+        row.innerHTML = "<th>" + packs[i].name + "</th><th>" 
+            + packs[i].position.x + "</th><th>" 
+            + packs[i].position.y + "</th><th>" 
+            + packs[i].position.z + "</th><th>"
+            + packs[i].geometry.parameters.width + "</th><th>"
+            + packs[i].geometry.parameters.height + "</th><th>"
+            + packs[i].geometry.parameters.depth + "</th>";
+        table.appendChild(row);
+    }
+    document.getElementById('table').appendChild(table);
+}
+
+document.getElementById("gridCheckbox").addEventListener('input', function (event) {
+    pallet.children[1].visible = document.getElementById("gridCheckbox").checked
 });
 
 
