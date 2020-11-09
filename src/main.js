@@ -257,6 +257,21 @@ scene.add(cameraPersp);
 cameraPersp.position.set(0, 80, 240);
 cameraPersp.lookAt(pallet.position);
 
+// ZOOM IN / ZOOM OUT
+var zoomInButton = document.getElementById( 'zoom-in' );
+var zoomOutButton = document.getElementById( 'zoom-out' );
+
+function onZoomIn() {
+    cameraPersp.position.set(cameraPersp.position.x*0.9, cameraPersp.position.y*0.9, cameraPersp.position.z*0.9);
+}
+
+function onZoomOut() {
+    cameraPersp.position.set(cameraPersp.position.x*1.1, cameraPersp.position.y*1.1, cameraPersp.position.z*1.1);
+}
+
+zoomInButton.addEventListener('click', onZoomIn, false);
+zoomOutButton.addEventListener('click', onZoomOut, false);
+
 
 // PALLETGROUP ROTATION CONTROLS
 
