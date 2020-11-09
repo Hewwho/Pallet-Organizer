@@ -11,10 +11,35 @@
             overflow: hidden;
             background-color: #FDFDFD;
         }
+        table {
+          font-family: arial, sans-serif;
+          font-size: 11px;
+          border-collapse: collapse;
+          width: 100%;
+          margin: 10px;
+        }
+
+        td,
+        th {
+          border: 1px solid #dddddd;
+          text-align: left;
+          padding: 4px;
+        }
+
+        tr:nth-child(even) {
+          background-color: #dddddd;
+        }
     </style>
   </head>
 
   <body>
+    <div style="position: fixed;">
+      <div id="table"></div>
+      <input type="checkbox" id="gridCheckbox" name="grid" checked> Show grid
+      <br/>
+      <button id="zoom-in">Zoom In</button>
+      <button id="zoom-out">Zoom Out</button>
+    </div>
     <div id="MainThreeJS"></div>
   </body>
 </html>
