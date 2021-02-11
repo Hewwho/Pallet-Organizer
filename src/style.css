@@ -1,0 +1,55 @@
+.btn {
+    padding: 6px 8px;
+    font-size: 14px;
+}
+
+.remove-button {
+    padding: 2px;
+    font-size: 11px;
+    width: 46px
+}
+
+.add-button {
+    padding: 2px;
+    font-size: 11px;
+    width: 46px;
+}
+
+.move-button {
+    padding: 4px 6px;
+    font-size: 13px;
+    width: 90px;
+    margin-bottom: 4px;
+}
+
+.nav-tabs .nav-link {
+    padding: 4px 10px;
+    font-size: 14px;
+}
+
+.selected-row {
+    background-color: #d4d4d4;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    opacity: 1;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}

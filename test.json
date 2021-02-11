@@ -1,44 +1,49 @@
 {
-    "pallet": {
-        "width": 80,
-        "height": 120,
-        "depth": 14.4
-    },
-    "packs": [
+    "data": [
         {
-            "name": "Woda",
-            "dimensions": {
-                "width": 20,
-                "height": 20,
-                "depth": 20
+            "pallet": {
+                "id": 0,
+                "width": 80,
+                "height": 14.4,
+                "depth": 120
             },
-            "weight": 20,
-            "positions": [
+            "packs": [
                 {
-                    "x": 6,
-                    "y": 0,
-                    "z": 5
+                    "name": "Woda",
+                    "dimensions": {
+                        "width": 20,
+                        "height": 20,
+                        "depth": 20
+                    },
+                    "weight": 20,
+                    "positions": [
+                        {
+                            "x": 6,
+                            "y": 10,
+                            "z": 5
+                        },
+                        {
+                            "x": -23,
+                            "y": 10,
+                            "z": 26
+                        }
+                    ]
                 },
                 {
-                    "x": -23,
-                    "y": 0,
-                    "z": 26
-                }
-            ]
-        },
-        {
-            "name": "Kwiatki",
-            "dimensions": {
-                "width": 30,
-                "height": 20,
-                "depth": 15
-            },
-            "weight": 2,
-            "positions": [
-                {
-                    "x": 13,
-                    "y": -8.881784197001252e-16,
-                    "z": -26
+                    "name": "Kwiatki",
+                    "dimensions": {
+                        "width": 30,
+                        "height": 20,
+                        "depth": 15
+                    },
+                    "weight": 2,
+                    "positions": [
+                        {
+                            "x": 13,
+                            "y": 10,
+                            "z": -26
+                        }
+                    ]
                 }
             ]
         }

@@ -16,7 +16,7 @@ const createWindow = () => {
   });
 
   // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'home.html'));
 
   // Reloading
   globalShortcut.register('f5', function() {
@@ -26,10 +26,10 @@ const createWindow = () => {
   
 
   // Open the DevTools.
-  //mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // Hide menu bar
-  //mainWindow.removeMenu();
+  // mainWindow.removeMenu();
   
   // Maximize screen
   mainWindow.maximize();
@@ -60,3 +60,17 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+
+const { ipcMain } = require('electron');
+
+let filePath = '';
+
+ipcMain.on('filepath-request', function (event) {
+  event.sender.send('filepath-reply', filePath);
+});
+
+ipcMain.handle('load-file', async (event, [loadPath]) => { 
+  filePath = loadPath;
+  const res = await BrowserWindow.getAllWindows()[0].loadFile(path.join(__dirname, 'index.html'));
+  return res;
+})
